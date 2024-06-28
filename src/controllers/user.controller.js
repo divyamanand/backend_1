@@ -33,7 +33,6 @@ const generateAccessAndRefreshTokens = async(userId) => {
 const registerUser = asyncHandler(async (req, res) => {
     
     const {fullName, email, username,password} = req.body
-    //console.log("email: ", email);
 
     if (
         [fullName, email, username, password].some((field) => field?.trim() === "")
@@ -48,7 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, "User with email or username already exists")
     }
-    console.log(req.files)
+
     const avatarLocalPath = req.files?. avatar[0]?.path
     //const converImageLocalPath = req.files?.coverImage[0]?.path
 
@@ -100,11 +99,11 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     const {email, username, password} = req.body
-
-    if (!username || !email) {
+    
+    if (!(username || email)) {
         throw new ApiError(400, "username or email is required")
     }
-
+    
     const user = await User.findOne({
         $or: [{username}, {email}]
     })
@@ -121,7 +120,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
-    const loggedInUser = await user.findById(user._id).
+    const loggedInUser = await User.findById(user._id).
     select("-password -refreshToken")
 
     const options = {
@@ -148,7 +147,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
-        req.used._id,
+        req.user._id,
         {
             $set: {
                 refreshToken: undefined
